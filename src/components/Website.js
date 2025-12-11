@@ -100,6 +100,100 @@ const Website = () => {
   const galleryMusicRef = useRef(null);
   const galleryMusic2Ref = useRef(null);
   const galleryMusic3Ref = useRef(null);
+  const audioUnlockedRef = useRef(false);
+
+  // Helper function to play audio with iOS compatibility
+  const playAudio = async (audioRef, options = {}) => {
+    if (!audioRef?.current) return;
+
+    const audio = audioRef.current;
+    
+    // Set audio properties
+    if (options.currentTime !== undefined) {
+      audio.currentTime = options.currentTime;
+    }
+    if (options.loop !== undefined) {
+      audio.loop = options.loop;
+    }
+    if (options.volume !== undefined) {
+      audio.volume = options.volume;
+    }
+
+    // Load audio if not loaded
+    if (audio.readyState < 2) {
+      audio.load();
+    }
+
+    // Try to play audio
+    try {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        await playPromise;
+        audioUnlockedRef.current = true;
+      }
+    } catch (error) {
+      console.log('Audio play error (may need user interaction):', error);
+      // On iOS, we might need user interaction first
+      // Try to unlock audio by playing a silent sound
+      if (!audioUnlockedRef.current) {
+        try {
+          // Create a temporary audio context to unlock
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            const ctx = new AudioContext();
+            if (ctx.state === 'suspended') {
+              await ctx.resume();
+            }
+          }
+        } catch (e) {
+          console.log('Could not unlock audio context:', e);
+        }
+      }
+    }
+  };
+
+  // Unlock audio on first user interaction
+  useEffect(() => {
+    const unlockAudio = async () => {
+      if (audioUnlockedRef.current) return;
+
+      // Try to unlock all audio elements
+      const audioElements = [
+        countdownAudioRef.current,
+        imagesMovingAudioRef.current,
+        galleryMusicRef.current,
+        galleryMusic2Ref.current,
+        galleryMusic3Ref.current
+      ].filter(Boolean);
+
+      for (const audio of audioElements) {
+        try {
+          audio.volume = 0.01; // Very quiet to avoid any sound
+          await audio.play();
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = 1; // Reset volume
+        } catch (e) {
+          // Ignore errors
+        }
+      }
+
+      audioUnlockedRef.current = true;
+    };
+
+    // Unlock on any user interaction
+    const events = ['touchstart', 'touchend', 'mousedown', 'keydown', 'click'];
+    const handlers = events.map(event => {
+      const handler = () => {
+        unlockAudio();
+        events.forEach(evt => {
+          document.removeEventListener(evt, handlers[events.indexOf(evt)]);
+        });
+      };
+      document.addEventListener(event, handler, { once: true, passive: true });
+      return handler;
+    });
+  }, []);
 
   // Check if password is stored in localStorage (so user doesn't have to re-enter)
   useEffect(() => {
@@ -110,8 +204,14 @@ const Website = () => {
   }, []);
 
   // Handle password submission
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    
+    // Unlock audio on user interaction (iOS requirement)
+    if (!audioUnlockedRef.current) {
+      await unlockAllAudio();
+    }
+    
     if (passwordInput === PASSWORD) {
       setIsPasswordCorrect(true);
       setPasswordError(false);
@@ -120,6 +220,31 @@ const Website = () => {
       setPasswordError(true);
       setPasswordInput('');
     }
+  };
+
+  // Function to unlock all audio elements
+  const unlockAllAudio = async () => {
+    const audioElements = [
+      countdownAudioRef.current,
+      imagesMovingAudioRef.current,
+      galleryMusicRef.current,
+      galleryMusic2Ref.current,
+      galleryMusic3Ref.current
+    ].filter(Boolean);
+
+    for (const audio of audioElements) {
+      try {
+        const originalVolume = audio.volume;
+        audio.volume = 0.01;
+        await audio.play();
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = originalVolume;
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+    audioUnlockedRef.current = true;
   };
 
   // Assign random images to each question (persist across renders)
@@ -150,7 +275,12 @@ const Website = () => {
   };
 
   // Handle start button click
-  const handleStart = useCallback(() => {
+  const handleStart = useCallback(async () => {
+    // Unlock audio on user interaction (iOS requirement)
+    if (!audioUnlockedRef.current) {
+      await unlockAllAudio();
+    }
+    
     if (buttonClickCount < 3) {
       // Increment click count and update text
       setButtonClickCount(prev => prev + 1);
@@ -168,12 +298,7 @@ const Website = () => {
   useEffect(() => {
     if (stage === STAGES.COUNTDOWN) {
       // Play countdown sound (skip first 2 seconds)
-      if (countdownAudioRef.current) {
-        countdownAudioRef.current.currentTime = 4;
-        countdownAudioRef.current.play().catch((error) => {
-          console.log('Error playing countdown sound:', error);
-        });
-      }
+      playAudio(countdownAudioRef, { currentTime: 4 });
 
       countdownIntervalRef.current = setInterval(() => {
         setCountdown((prev) => {
@@ -221,13 +346,7 @@ const Website = () => {
       }
 
       // Play images moving sound with loop
-      if (imagesMovingAudioRef.current) {
-        imagesMovingAudioRef.current.currentTime = 0;
-        imagesMovingAudioRef.current.loop = true;
-        imagesMovingAudioRef.current.play().catch((error) => {
-          console.log('Error playing images moving sound:', error);
-        });
-      }
+      playAudio(imagesMovingAudioRef, { currentTime: 0, loop: true });
 
       // Start interval after a small delay to ensure state is ready
       setTimeout(() => {
@@ -309,24 +428,26 @@ const Website = () => {
   };
 
   // Function to play music track
-  const playMusicTrack = (trackNumber) => {
+  const playMusicTrack = async (trackNumber) => {
     // Stop all music first
-    if (galleryMusicRef.current) galleryMusicRef.current.pause();
-    if (galleryMusic2Ref.current) galleryMusic2Ref.current.pause();
-    if (galleryMusic3Ref.current) galleryMusic3Ref.current.pause();
+    if (galleryMusicRef.current) {
+      galleryMusicRef.current.pause();
+      galleryMusicRef.current.currentTime = 0;
+    }
+    if (galleryMusic2Ref.current) {
+      galleryMusic2Ref.current.pause();
+      galleryMusic2Ref.current.currentTime = 0;
+    }
+    if (galleryMusic3Ref.current) {
+      galleryMusic3Ref.current.pause();
+      galleryMusic3Ref.current.currentTime = 0;
+    }
 
     const musicRef = trackNumber === 1 ? galleryMusicRef : 
                      trackNumber === 2 ? galleryMusic2Ref : 
                      galleryMusic3Ref;
 
-    if (musicRef.current) {
-      musicRef.current.currentTime = 0;
-      musicRef.current.loop = true;
-      musicRef.current.volume = 0.7;
-      musicRef.current.play().catch((error) => {
-        console.log('Error playing gallery music:', error);
-      });
-    }
+    await playAudio(musicRef, { currentTime: 0, loop: true, volume: 0.7 });
     setCurrentMusicTrack(trackNumber);
   };
 
@@ -1262,6 +1383,12 @@ const Website = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.3 }}
+              onClick={async () => {
+                // Unlock audio on button click (iOS requirement)
+                if (!audioUnlockedRef.current) {
+                  await unlockAllAudio();
+                }
+              }}
             >
               دخول
             </motion.button>
@@ -1280,12 +1407,47 @@ const Website = () => {
   // Show main website if date passed and password correct
   return (
     <>
-      {/* Hidden audio elements */}
-      <audio ref={countdownAudioRef} src={countdownSound} preload="auto" />
-      <audio ref={imagesMovingAudioRef} src={imagesMovingSound} preload="auto" />
-      <audio ref={galleryMusicRef} src={galleryMusic} preload="auto" />
-      <audio ref={galleryMusic2Ref} src={galleryMusic2} preload="auto" />
-      <audio ref={galleryMusic3Ref} src={galleryMusic3} preload="auto" />
+      {/* Hidden audio elements with iOS compatibility */}
+      <audio 
+        ref={countdownAudioRef} 
+        src={countdownSound} 
+        preload="auto"
+        playsInline
+        webkit-playsinline="true"
+        crossOrigin="anonymous"
+      />
+      <audio 
+        ref={imagesMovingAudioRef} 
+        src={imagesMovingSound} 
+        preload="auto"
+        playsInline
+        webkit-playsinline="true"
+        crossOrigin="anonymous"
+      />
+      <audio 
+        ref={galleryMusicRef} 
+        src={galleryMusic} 
+        preload="auto"
+        playsInline
+        webkit-playsinline="true"
+        crossOrigin="anonymous"
+      />
+      <audio 
+        ref={galleryMusic2Ref} 
+        src={galleryMusic2} 
+        preload="auto"
+        playsInline
+        webkit-playsinline="true"
+        crossOrigin="anonymous"
+      />
+      <audio 
+        ref={galleryMusic3Ref} 
+        src={galleryMusic3} 
+        preload="auto"
+        playsInline
+        webkit-playsinline="true"
+        crossOrigin="anonymous"
+      />
       
       <AnimatePresence mode="wait">
       {(() => {
