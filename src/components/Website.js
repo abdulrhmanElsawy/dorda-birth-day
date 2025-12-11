@@ -63,10 +63,7 @@ const STAGES = {
   SCROLL_GALLERY: 'scroll_gallery',
 };
 
-const RELEASE_DATE = new Date('2025-12-12T00:00:00');
 const PASSWORD = '1212'; // Main password screen password
-const COUNTDOWN_PASSWORD = '26573912'; // Countdown skip password
-const DATE_WAIT_PASSWORD = '26573912'; // Date wait screen password
 
 const Website = () => {
   const [stage, setStage] = useState(STAGES.INTRO);
@@ -86,14 +83,9 @@ const Website = () => {
   const [imageDirection, setImageDirection] = useState('bottom');
   const [questionBackgrounds, setQuestionBackgrounds] = useState({ step1: null, step2: null });
   const [buttonClickCount, setButtonClickCount] = useState(0);
-  const [isDatePassed, setIsDatePassed] = useState(false);
   const [isPasswordCorrect, setIsPasswordCorrect] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-  const [countdownPasswordInput, setCountdownPasswordInput] = useState('');
-  const [countdownPasswordError, setCountdownPasswordError] = useState(false);
-  const [dateWaitPasswordInput, setDateWaitPasswordInput] = useState('');
-  const [dateWaitPasswordError, setDateWaitPasswordError] = useState(false);
   const swiperRef = useRef(null);
   const galleryContainerRef = useRef(null);
   const autoScrollIntervalRef = useRef(null);
@@ -109,29 +101,13 @@ const Website = () => {
   const galleryMusic2Ref = useRef(null);
   const galleryMusic3Ref = useRef(null);
 
-  // Check if release date has passed
-  useEffect(() => {
-    const checkDate = () => {
-      const now = new Date();
-      setIsDatePassed(now >= RELEASE_DATE);
-    };
-    
-    checkDate();
-    // Check every minute in case date changes
-    const interval = setInterval(checkDate, 60000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
   // Check if password is stored in localStorage (so user doesn't have to re-enter)
   useEffect(() => {
-    if (isDatePassed) {
-      const savedPassword = localStorage.getItem('website_password_verified');
-      if (savedPassword === 'true') {
-        setIsPasswordCorrect(true);
-      }
+    const savedPassword = localStorage.getItem('website_password_verified');
+    if (savedPassword === 'true') {
+      setIsPasswordCorrect(true);
     }
-  }, [isDatePassed]);
+  }, []);
 
   // Handle password submission
   const handlePasswordSubmit = (e) => {
@@ -143,42 +119,6 @@ const Website = () => {
     } else {
       setPasswordError(true);
       setPasswordInput('');
-    }
-  };
-
-  // Handle countdown password submission
-  const handleCountdownPasswordSubmit = (e) => {
-    e.preventDefault();
-    if (countdownPasswordInput === COUNTDOWN_PASSWORD) {
-      // Skip countdown and go directly to montage
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
-      if (countdownAudioRef.current) {
-        countdownAudioRef.current.pause();
-        countdownAudioRef.current.currentTime = 0;
-      }
-      setStage(STAGES.MONTAGE);
-      setMontageIndex(0);
-      setCountdownPasswordError(false);
-      setCountdownPasswordInput('');
-    } else {
-      setCountdownPasswordError(true);
-      setCountdownPasswordInput('');
-    }
-  };
-
-  // Handle date wait password submission
-  const handleDateWaitPasswordSubmit = (e) => {
-    e.preventDefault();
-    if (dateWaitPasswordInput === DATE_WAIT_PASSWORD) {
-      // Skip date restriction
-      setIsDatePassed(true);
-      setDateWaitPasswordError(false);
-      setDateWaitPasswordInput('');
-    } else {
-      setDateWaitPasswordError(true);
-      setDateWaitPasswordInput('');
     }
   };
 
@@ -271,6 +211,15 @@ const Website = () => {
   // Montage effect
   useEffect(() => {
     if (stage === STAGES.MONTAGE) {
+      // Reset montage index when entering montage stage
+      setMontageIndex(0);
+      
+      // Clear any existing interval first
+      if (montageIntervalRef.current) {
+        clearInterval(montageIntervalRef.current);
+        montageIntervalRef.current = null;
+      }
+
       // Play images moving sound with loop
       if (imagesMovingAudioRef.current) {
         imagesMovingAudioRef.current.currentTime = 0;
@@ -280,24 +229,29 @@ const Website = () => {
         });
       }
 
-      montageIntervalRef.current = setInterval(() => {
-        setMontageIndex((prev) => {
-          if (prev >= MONTAGE_IMAGES.length - 1) {
-            clearInterval(montageIntervalRef.current);
-            // Stop images moving sound when montage ends
-            if (imagesMovingAudioRef.current) {
-              imagesMovingAudioRef.current.loop = false;
-              imagesMovingAudioRef.current.pause();
-              imagesMovingAudioRef.current.currentTime = 0;
+      // Start interval after a small delay to ensure state is ready
+      setTimeout(() => {
+        montageIntervalRef.current = setInterval(() => {
+          setMontageIndex((prev) => {
+            const nextIndex = prev + 1;
+            if (nextIndex >= MONTAGE_IMAGES.length) {
+              clearInterval(montageIntervalRef.current);
+              montageIntervalRef.current = null;
+              // Stop images moving sound when montage ends
+              if (imagesMovingAudioRef.current) {
+                imagesMovingAudioRef.current.loop = false;
+                imagesMovingAudioRef.current.pause();
+                imagesMovingAudioRef.current.currentTime = 0;
+              }
+              setTimeout(() => {
+                setStage(STAGES.QUESTIONS);
+                setActiveQuestionIndex(0);
+              }, 500);
+              return prev;
             }
-            setTimeout(() => {
-              setStage(STAGES.QUESTIONS);
-              setActiveQuestionIndex(0);
-            }, 500);
-            return prev;
-          }
-          return prev + 1;
-        });
+            return nextIndex;
+          });
+        }, 150); // Slightly slower for smoother transitions
       }, 100);
     } else {
       // Stop images moving sound if we leave the montage stage
@@ -306,11 +260,17 @@ const Website = () => {
         imagesMovingAudioRef.current.pause();
         imagesMovingAudioRef.current.currentTime = 0;
       }
+      // Clear interval when leaving montage stage
+      if (montageIntervalRef.current) {
+        clearInterval(montageIntervalRef.current);
+        montageIntervalRef.current = null;
+      }
     }
 
     return () => {
       if (montageIntervalRef.current) {
         clearInterval(montageIntervalRef.current);
+        montageIntervalRef.current = null;
       }
     };
   }, [stage]);
@@ -721,58 +681,13 @@ const Website = () => {
         <div className="scratch scratch-1"></div>
         <div className="scratch scratch-2"></div>
       </div>
-      
-      {/* Countdown Password Input */}
-      <motion.div
-        className="countdown-password-container"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
-        <form onSubmit={handleCountdownPasswordSubmit} className="countdown-password-form">
-          <motion.input
-            type="password"
-            value={countdownPasswordInput}
-            onChange={(e) => {
-              setCountdownPasswordInput(e.target.value);
-              setCountdownPasswordError(false);
-            }}
-            className={`countdown-password-input ${countdownPasswordError ? 'error' : ''}`}
-            placeholder="كلمة المرور لتخطي العد التنازلي"
-            autoComplete="off"
-            autoFocus
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          />
-          {countdownPasswordError && (
-            <motion.p
-              className="countdown-password-error"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              كلمة المرور غير صحيحة
-            </motion.p>
-          )}
-          <motion.button
-            type="submit"
-            className="countdown-password-submit"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            تخطي
-          </motion.button>
-        </form>
-      </motion.div>
     </motion.div>
   );
 
   const renderMontage = () => {
-    if (montageIndex >= MONTAGE_IMAGES.length) return null;
+    if (montageIndex >= MONTAGE_IMAGES.length || MONTAGE_IMAGES.length === 0 || montageIndex < 0) {
+      return null;
+    }
     
     return (
       <div className="stage montage-stage">
@@ -783,18 +698,31 @@ const Website = () => {
             initial={{ scale: 1.3, opacity: 0, filter: "blur(20px)" }}
             animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
             exit={{ scale: 0.8, opacity: 0, filter: "blur(10px)" }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
           >
-          <img 
-            src={MONTAGE_IMAGES[montageIndex]} 
-            alt={`Montage ${montageIndex + 1}`} 
-            className="montage-image"
-          />
+            <img 
+              src={MONTAGE_IMAGES[montageIndex]} 
+              alt={`Montage ${montageIndex + 1}`} 
+              className="montage-image"
+              loading="eager"
+              onError={(e) => {
+                console.error(`Failed to load image at index ${montageIndex}:`, MONTAGE_IMAGES[montageIndex]);
+                // Skip to next image on error if possible
+                if (montageIndex < MONTAGE_IMAGES.length - 1) {
+                  setTimeout(() => {
+                    setMontageIndex(prev => Math.min(prev + 1, MONTAGE_IMAGES.length - 1));
+                  }, 100);
+                }
+              }}
+              onLoad={() => {
+                // Image loaded successfully
+              }}
+            />
             <motion.div 
               className="flash-overlay"
               initial={{ opacity: 0.4 }}
               animate={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
             />
           </motion.div>
         </AnimatePresence>
@@ -1281,97 +1209,6 @@ const Website = () => {
     );
   };
 
-  // Render date waiting screen
-  const renderDateWait = () => {
-    const now = new Date();
-    const timeUntil = RELEASE_DATE - now;
-    const days = Math.floor(timeUntil / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeUntil % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
-
-    return (
-      <motion.div
-        className="date-wait-screen"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="date-wait-content">
-          <motion.div
-            className="date-wait-icon"
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          >
-            ⏰
-          </motion.div>
-          <h1 className="date-wait-title">عقبال يوم 12 ديسمبر</h1>
-          <p className="date-wait-subtitle">الموقع سيكون متاحاً قريباً</p>
-          {timeUntil > 0 && (
-            <div className="date-countdown">
-              <div className="countdown-item">
-                <span className="countdown-number">{days}</span>
-                <span className="countdown-label">يوم</span>
-              </div>
-              <div className="countdown-item">
-                <span className="countdown-number">{hours}</span>
-                <span className="countdown-label">ساعة</span>
-              </div>
-              <div className="countdown-item">
-                <span className="countdown-number">{minutes}</span>
-                <span className="countdown-label">دقيقة</span>
-              </div>
-            </div>
-          )}
-          
-          {/* Date Wait Password Input */}
-          <motion.form
-            onSubmit={handleDateWaitPasswordSubmit}
-            className="date-wait-password-form"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-          >
-            <motion.input
-              type="password"
-              value={dateWaitPasswordInput}
-              onChange={(e) => {
-                setDateWaitPasswordInput(e.target.value);
-                setDateWaitPasswordError(false);
-              }}
-              className={`date-wait-password-input ${dateWaitPasswordError ? 'error' : ''}`}
-              placeholder="كلمة المرور للدخول"
-              autoComplete="off"
-              autoFocus
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.7 }}
-            />
-            {dateWaitPasswordError && (
-              <motion.p
-                className="date-wait-password-error"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-              >
-                كلمة المرور غير صحيحة
-              </motion.p>
-            )}
-            <motion.button
-              type="submit"
-              className="date-wait-password-submit"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
-            >
-              دخول
-            </motion.button>
-          </motion.form>
-        </div>
-      </motion.div>
-    );
-  };
 
   // Render password screen
   const renderPasswordScreen = () => {
@@ -1435,12 +1272,7 @@ const Website = () => {
   };
 
   // Main render
-  // Show date wait screen if date hasn't passed
-  if (!isDatePassed) {
-    return renderDateWait();
-  }
-
-  // Show password screen if date passed but password not entered
+  // Show password screen if password not entered
   if (!isPasswordCorrect) {
     return renderPasswordScreen();
   }
