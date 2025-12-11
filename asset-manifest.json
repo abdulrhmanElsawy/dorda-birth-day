@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/dorda-birth-day/static/css/main.d79aa48f.css",
-    "main.js": "/dorda-birth-day/static/js/main.597f2a58.js",
+    "main.css": "/dorda-birth-day/static/css/main.beadcb92.css",
+    "main.js": "/dorda-birth-day/static/js/main.0f64667f.js",
     "static/js/453.9147bbb0.chunk.js": "/dorda-birth-day/static/js/453.9147bbb0.chunk.js",
     "static/media/amrdiap2.mp3": "/dorda-birth-day/static/media/amrdiap2.0e0ae1d9b8fe49707fed.mp3",
     "static/media/amrdiap.mp3": "/dorda-birth-day/static/media/amrdiap.5f7423ebd71c9f8fb601.mp3",
@@ -125,12 +125,12 @@
     "static/media/1 (61).jpg": "/dorda-birth-day/static/media/1 (61).ec1ee9fb1c2409c2b2c8.jpg",
     "static/media/1 (13).jpg": "/dorda-birth-day/static/media/1 (13).af1e77cdaea863ebaf8a.jpg",
     "index.html": "/dorda-birth-day/index.html",
-    "main.d79aa48f.css.map": "/dorda-birth-day/static/css/main.d79aa48f.css.map",
-    "main.597f2a58.js.map": "/dorda-birth-day/static/js/main.597f2a58.js.map",
+    "main.beadcb92.css.map": "/dorda-birth-day/static/css/main.beadcb92.css.map",
+    "main.0f64667f.js.map": "/dorda-birth-day/static/js/main.0f64667f.js.map",
     "453.9147bbb0.chunk.js.map": "/dorda-birth-day/static/js/453.9147bbb0.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d79aa48f.css",
-    "static/js/main.597f2a58.js"
+    "static/css/main.beadcb92.css",
+    "static/js/main.0f64667f.js"
   ]
 }
