@@ -91,6 +91,8 @@ const Website = () => {
   const [passwordError, setPasswordError] = useState(false);
   const [countdownPasswordInput, setCountdownPasswordInput] = useState('');
   const [countdownPasswordError, setCountdownPasswordError] = useState(false);
+  const [dateWaitPasswordInput, setDateWaitPasswordInput] = useState('');
+  const [dateWaitPasswordError, setDateWaitPasswordError] = useState(false);
   const swiperRef = useRef(null);
   const galleryContainerRef = useRef(null);
   const autoScrollIntervalRef = useRef(null);
@@ -162,6 +164,20 @@ const Website = () => {
     } else {
       setCountdownPasswordError(true);
       setCountdownPasswordInput('');
+    }
+  };
+
+  // Handle date wait password submission
+  const handleDateWaitPasswordSubmit = (e) => {
+    e.preventDefault();
+    if (dateWaitPasswordInput === PASSWORD) {
+      // Skip date restriction
+      setIsDatePassed(true);
+      setDateWaitPasswordError(false);
+      setDateWaitPasswordInput('');
+    } else {
+      setDateWaitPasswordError(true);
+      setDateWaitPasswordInput('');
     }
   };
 
@@ -710,7 +726,7 @@ const Website = () => {
         className="countdown-password-container"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.5 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
       >
         <form onSubmit={handleCountdownPasswordSubmit} className="countdown-password-form">
           <motion.input
@@ -723,9 +739,10 @@ const Website = () => {
             className={`countdown-password-input ${countdownPasswordError ? 'error' : ''}`}
             placeholder="كلمة المرور لتخطي العد التنازلي"
             autoComplete="off"
+            autoFocus
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 1.2 }}
+            transition={{ delay: 0.5 }}
           />
           {countdownPasswordError && (
             <motion.p
@@ -737,6 +754,17 @@ const Website = () => {
               كلمة المرور غير صحيحة
             </motion.p>
           )}
+          <motion.button
+            type="submit"
+            className="countdown-password-submit"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+          >
+            تخطي
+          </motion.button>
         </form>
       </motion.div>
     </motion.div>
@@ -1293,6 +1321,52 @@ const Website = () => {
               </div>
             </div>
           )}
+          
+          {/* Date Wait Password Input */}
+          <motion.form
+            onSubmit={handleDateWaitPasswordSubmit}
+            className="date-wait-password-form"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <motion.input
+              type="password"
+              value={dateWaitPasswordInput}
+              onChange={(e) => {
+                setDateWaitPasswordInput(e.target.value);
+                setDateWaitPasswordError(false);
+              }}
+              className={`date-wait-password-input ${dateWaitPasswordError ? 'error' : ''}`}
+              placeholder="كلمة المرور للدخول"
+              autoComplete="off"
+              autoFocus
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.7 }}
+            />
+            {dateWaitPasswordError && (
+              <motion.p
+                className="date-wait-password-error"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+              >
+                كلمة المرور غير صحيحة
+              </motion.p>
+            )}
+            <motion.button
+              type="submit"
+              className="date-wait-password-submit"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+            >
+              دخول
+            </motion.button>
+          </motion.form>
         </div>
       </motion.div>
     );
