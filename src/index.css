@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Fustat:wght@200..800&display=swap');
+
+
+body {
+  margin: 0;
+  font-family: "Fustat", sans-serif !important;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.btn{
+  outline: none !important;
+  border: none !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* RTL Support */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .container {
+  direction: rtl;
+}
+
+[dir="rtl"] .nav-elements ul {
+  direction: rtl;
+}
+
+/* LTR defaults to ensure English layout works well */
+[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="ltr"] .contact-us label,
+[dir="ltr"] .contact-us input,
+[dir="ltr"] .contact-us button {
+  text-align: left;
+}
+
+[dir="rtl"] .right-content {
+  direction: rtl;
+}
+
+[dir="rtl"] .hero-content {
+  text-align: right;
+}
+
+[dir="rtl"] .about-us .text {
+  text-align: right;
+}
+
+[dir="rtl"] .about-us .img {
+  text-align: left;
+}
+
+[dir="rtl"] .about-us .text .para span {
+  left: auto !important;
+  right: -20px !important;
+}
+
+[dir="rtl"] .about-us .text {
+  margin-left: 0 !important;
+  margin-right: 50px !important;
+}
+
+[dir="rtl"] .our-services .service {
+  text-align: right;
+}
+
+[dir="rtl"] .our-team .team-mem .text {
+  text-align: right;
+}
+
+[dir="rtl"] .reviews .review .text {
+  text-align: right;
+}
+
+[dir="rtl"] .reviews .client-info {
+  text-align: right;
+}
+
+[dir="rtl"] .reviews .client-info div {
+  text-align: right;
+}
+
+[dir="rtl"] .contact-us .contact-form {
+  text-align: right;
+}
+
+[dir="rtl"] .footer .short-links ul {
+  text-align: right;
+}
+
+[dir="rtl"] .footer .contact-details {
+  text-align: right;
+}
+
+/* Language dropdown styling */
+.list a.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.list a:hover {
+  background-color: #f8f9fa;
+}
+
+/* Mobile Responsive Fixes */
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    padding-left: 15px;
+    padding-right: 15px;
+    overflow-x: hidden;
+  }
+  
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .col-lg-4, .col-md-5, .col-sm-6, .col-12 {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  /* Fix AboutUs text width on mobile */
+  .about-us .text .para p {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Fix RTL margins on mobile */
+  [dir="rtl"] .about-us .text {
+    margin-right: 15px !important;
+  }
+  
+  /* Ensure all sections don't overflow */
+  .hero-section,
+  .about-us,
+  .our-services,
+  .our-team,
+  .reviews,
+  .partners,
+  .contact-us,
+  .footer {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  /* Fix any potential overflow issues */
+  .App {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Ensure images don't overflow */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Fix any absolute positioned elements */
+  .about-us .text .para span {
+    position: absolute;
+    left: -15px;
+  }
+  
+  [dir="rtl"] .about-us .text .para span {
+    left: auto;
+    right: -15px;
+  }
+}
+

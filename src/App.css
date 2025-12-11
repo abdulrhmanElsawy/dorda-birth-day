@@ -1,0 +1,15 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Fustat:wght@200..800&display=swap');
+
+
+body {
+  font-family: "Fustat", sans-serif !important;
+}
+
+a{
+      text-decoration: none !important;
+}
+
+ul{
+  list-style: none;
+}
