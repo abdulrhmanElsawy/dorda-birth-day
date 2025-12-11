@@ -64,8 +64,9 @@ const STAGES = {
 };
 
 const RELEASE_DATE = new Date('2025-12-12T00:00:00');
-const PASSWORD = '1212';
-const COUNTDOWN_PASSWORD = '26573912';
+const PASSWORD = '1212'; // Main password screen password
+const COUNTDOWN_PASSWORD = '26573912'; // Countdown skip password
+const DATE_WAIT_PASSWORD = '26573912'; // Date wait screen password
 
 const Website = () => {
   const [stage, setStage] = useState(STAGES.INTRO);
@@ -170,7 +171,7 @@ const Website = () => {
   // Handle date wait password submission
   const handleDateWaitPasswordSubmit = (e) => {
     e.preventDefault();
-    if (dateWaitPasswordInput === PASSWORD) {
+    if (dateWaitPasswordInput === DATE_WAIT_PASSWORD) {
       // Skip date restriction
       setIsDatePassed(true);
       setDateWaitPasswordError(false);
