@@ -1,7 +1,7 @@
 {
   "name": "iridium",
   "proxy": "http://localhost:5000",
-  "homepage": "https://abdulrhmanElsawy.github.io/dordabirthday",
+  "homepage": "https://abdulrhmanElsawy.github.io/dorda-birth-day",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
